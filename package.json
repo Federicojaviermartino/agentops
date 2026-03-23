@@ -4,7 +4,7 @@
   "description": "AgentOps - EU AI Act Compliance Platform",
   "private": true,
   "scripts": {
-    "build": "nest build",
+    "build": "npx nest build",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/src/main",
@@ -71,7 +71,7 @@
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.16",
-    "@nestjs/schematics": "^7.3.1",
+    "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.1.16",
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.6",
