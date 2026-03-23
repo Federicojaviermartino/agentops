@@ -1,0 +1,63 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AgentOps - EU AI Act Compliance Platform</title><meta name="description" content="Automated EU AI Act compliance. 5 AI agents, 21 languages, 96 API endpoints. Be compliant before August 2, 2026."><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet"><style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Outfit','Segoe UI',system-ui,-apple-system,sans-serif;background:#060a14;color:#e8edf5;line-height:1.6}
+.c{max-width:1000px;margin:0 auto;padding:0 20px}
+nav{padding:14px 0;border-bottom:1px solid #1e2d4a;position:sticky;top:0;background:#060a14ee;backdrop-filter:blur(12px);z-index:100}
+nav .i{display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:20px;font-weight:700}.logo span{color:#3b82f6}
+nav a{color:#8b9dc3;text-decoration:none;font-size:13px;font-weight:500;margin-left:20px;transition:.2s}nav a:hover{color:#e8edf5}
+.btn{background:#3b82f6;color:#fff;padding:8px 20px;border-radius:6px;font-weight:600;font-size:13px;text-decoration:none;display:inline-block;transition:.2s}.btn:hover{background:#2563eb;color:#fff}
+.btn-o{border:1px solid #3b82f640;color:#60a5fa;padding:8px 20px;border-radius:6px;font-weight:600;font-size:13px;text-decoration:none;transition:.2s}
+.hero{padding:80px 0 60px;text-align:center;position:relative}
+.hero::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:600px;height:400px;background:radial-gradient(ellipse,rgba(59,130,246,.06) 0%,transparent 70%);pointer-events:none}
+.hero h1{font-size:clamp(28px,5vw,44px);font-weight:700;letter-spacing:-1.5px;line-height:1.15;margin-bottom:16px}
+.hero h1 em{font-style:normal;color:#3b82f6}
+.hero p{font-size:clamp(14px,2vw,17px);color:#8b9dc3;max-width:560px;margin:0 auto 24px}
+.ha{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:32px}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:16px;font-size:12px;color:#ef4444;font-weight:600}
+.section{padding:60px 0}.s-t{font-size:clamp(22px,3vw,28px);font-weight:700;text-align:center;margin-bottom:10px}
+.s-s{font-size:14px;color:#8b9dc3;text-align:center;max-width:500px;margin:0 auto 36px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:14px}
+.card{background:#0d1321;border:1px solid #1e2d4a;border-radius:10px;padding:20px;transition:.2s}
+.card:hover{border-color:#3b82f660;transform:translateY(-1px)}
+.card h3{font-size:15px;font-weight:600;margin-bottom:4px}.card p{font-size:12px;color:#8b9dc3;line-height:1.5}
+.tag{display:inline-block;margin-top:8px;padding:2px 8px;border-radius:4px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.pg{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.pc{background:#0d1321;border:1px solid #1e2d4a;border-radius:10px;padding:24px;position:relative}
+.pc.f{border-color:#3b82f6;box-shadow:0 0 24px rgba(59,130,246,.08)}
+.pb{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#3b82f6;color:#fff;padding:2px 12px;border-radius:8px;font-size:10px;font-weight:600}
+.pc h3{font-size:16px;font-weight:600;margin-bottom:4px}
+.price{font-size:32px;font-weight:700;margin:10px 0;font-family:'JetBrains Mono',monospace}.price span{font-size:13px;color:#8b9dc3;font-weight:400}
+.pc ul{list-style:none;margin:14px 0}.pc li{padding:4px 0;font-size:12px;color:#8b9dc3}.pc li::before{content:'✓ ';color:#10b981}
+footer{padding:30px 0;border-top:1px solid #1e2d4a;text-align:center}footer p{font-size:12px;color:#8b9dc3}
+@media(max-width:600px){nav .links{display:none}.hero{padding:40px 0 30px}}
+</style></head><body>
+<nav><div class="c i"><div class="logo">Agent<span>Ops</span></div><div class="links"><a href="#agents">Agents</a><a href="#pricing">Pricing</a><a href="/docs" class="btn">API Docs</a></div></div></nav>
+<section class="hero"><div class="c">
+<div class="badge" id="deadline-badge"></div>
+<h1 style="margin-top:20px">Your <em>AI compliance</em><br>inspector, automated</h1>
+<p>5 AI agents classify risk, audit code, detect bias, generate documentation, and monitor your AI systems. 21 languages. 96 API endpoints.</p>
+<div class="ha"><a href="/docs" class="btn">Start Free Trial</a><a href="#" onclick="fetch('/demo/login').then(r=>r.json()).then(d=>{localStorage.setItem('demo_token',d.accessToken);alert('Demo token saved! Use Bearer '+d.accessToken.substring(0,20)+'... in API calls')});return false;" class="btn-o">Try Demo (no signup)</a></div>
+</div></section>
+<section class="section" id="agents"><div class="c">
+<div class="s-t">5 specialized AI agents</div>
+<div class="s-s">Each agent covers one area of EU AI Act compliance. Together they handle the full regulatory lifecycle.</div>
+<div class="grid3">
+<div class="card"><h3>Classification Agent</h3><p>Classifies risk (Unacceptable/High/Limited/Minimal) per Art. 5-6 + Annex III. 8 heuristic overrides for critical cases.</p><div class="tag" style="background:rgba(59,130,246,.08);color:#60a5fa">Art. 5-6</div></div>
+<div class="card"><h3>Technical Audit Agent</h3><p>Audits GitHub/GitLab repos against 7 compliance areas (Art. 9-15). Risk management, data governance, documentation, logging, transparency, oversight, accuracy.</p><div class="tag" style="background:rgba(16,185,129,.08);color:#10b981">Art. 9-15</div></div>
+<div class="card"><h3>Bias Detection Agent</h3><p>Fairlearn-powered analysis: demographic parity, disparate impact, equalized odds, predictive parity, accuracy disparity across protected attributes.</p><div class="tag" style="background:rgba(245,158,11,.08);color:#f59e0b">Art. 10</div></div>
+<div class="card"><h3>Documentation Generator</h3><p>Auto-generates Annex IV (9 sections), FRIA, Conformity Declaration, and Art. 50 Transparency Notices in HTML.</p><div class="tag" style="background:rgba(139,92,246,.08);color:#a78bfa">Art. 11</div></div>
+<div class="card"><h3>Monitoring Agent</h3><p>Continuous: drift detection, regulatory change scanning, document freshness, deadline alerts. Never fall out of compliance.</p><div class="tag" style="background:rgba(6,182,212,.08);color:#06b6d4">Art. 72</div></div>
+<div class="card"><h3>10 Unique Features</h3><p>Compliance Assistant, Roadmap, Checklist (25 items), Comparator (4 regulations), Timeline, Benchmark, Incident Reporting (72h/15d), Evidence Package, Score A-F, API Keys.</p><div class="tag" style="background:rgba(239,68,68,.08);color:#ef4444">Exclusive</div></div>
+</div>
+</div></section>
+<section class="section" id="pricing" style="background:#0d1321"><div class="c">
+<div class="s-t">Simple pricing</div><div class="s-s">Start with the demo. No credit card required.</div>
+<div class="pg">
+<div class="pc"><h3>Starter</h3><p style="font-size:12px;color:#8b9dc3">Small teams</p><div class="price">199<span> EUR/mo</span></div><ul><li>3 AI systems</li><li>Classification Agent</li><li>Basic findings</li><li>Email support</li></ul><a href="/docs" class="btn-o" style="display:block;text-align:center">Get Started</a></div>
+<div class="pc f"><div class="pb">Most Popular</div><h3>Professional</h3><p style="font-size:12px;color:#8b9dc3">Growing companies</p><div class="price">499<span> EUR/mo</span></div><ul><li>15 AI systems</li><li>All 5 Agents</li><li>Repo audit + Bias detection</li><li>Documentation generator</li><li>Priority support + API</li></ul><a href="/docs" class="btn" style="display:block;text-align:center">Start Free Trial</a></div>
+<div class="pc"><h3>Enterprise</h3><p style="font-size:12px;color:#8b9dc3">Large organizations</p><div class="price">Custom</div><ul><li>Unlimited systems</li><li>Everything in Pro</li><li>SSO / SAML</li><li>Dedicated support + SLA</li><li>On-premise option</li></ul><a href="mailto:sales@agentops.eu" class="btn-o" style="display:block;text-align:center">Contact Sales</a></div>
+</div>
+</div></section>
+<footer><div class="c"><p><strong>Agent<span style="color:#3b82f6">Ops</span></strong> | EU AI Act Compliance Platform | Built in Europe</p><p style="margin-top:6px">21 languages | 96 endpoints | 29 modules | 351 tests | <a href="/docs" style="color:#60a5fa">API Docs</a> | <a href="/demo" style="color:#60a5fa">Demo</a></p></div></footer>
+<script>const d=new Date('2026-08-02');const days=Math.ceil((d-Date.now())/864e5);document.getElementById('deadline-badge').textContent=`⚠ ${days} days until EU AI Act enforcement`;</script>
+</body></html>

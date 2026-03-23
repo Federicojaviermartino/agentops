@@ -1,0 +1,435 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// === ENUMS ===
+enum Plan {
+  FREE
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+enum UserRole {
+  OWNER
+  ADMIN
+  COMPLIANCE_OFFICER
+  DEVELOPER
+  VIEWER
+}
+enum RiskLevel {
+  UNACCEPTABLE
+  HIGH
+  LIMITED
+  MINIMAL
+}
+enum ComplianceStatus {
+  COMPLIANT
+  PARTIAL
+  NON_COMPLIANT
+  NOT_ASSESSED
+}
+enum RepoProvider {
+  GITHUB
+  GITLAB
+  BITBUCKET
+}
+enum AssessmentStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+enum AssessmentType {
+  FULL
+  CLASSIFICATION_ONLY
+  AUDIT_ONLY
+}
+enum TriggerType {
+  MANUAL
+  SCHEDULED
+  WEBHOOK
+}
+enum AgentType {
+  CLASSIFICATION
+  TECHNICAL_AUDIT
+  BIAS_DETECTION
+  DOCUMENTATION
+  MONITORING
+}
+enum AgentStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  SKIPPED
+}
+enum Severity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  INFO
+}
+enum FindingCategory {
+  PROHIBITED_USE
+  RISK_MANAGEMENT
+  DATA_GOVERNANCE
+  DOCUMENTATION
+  LOGGING
+  TRANSPARENCY
+  HUMAN_OVERSIGHT
+  ACCURACY_ROBUSTNESS
+  BIAS
+  OTHER
+}
+enum FindingStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  VERIFIED
+  ACCEPTED
+  FALSE_POSITIVE
+}
+enum Effort {
+  HOURS
+  DAYS
+  WEEKS
+}
+enum DocType {
+  ANNEX_IV
+  FRIA
+  CONFORMITY_DECLARATION
+  TRANSPARENCY_NOTICE
+}
+enum EventType {
+  DRIFT_DETECTED
+  REGULATORY_CHANGE
+  DOCUMENT_EXPIRING
+  DEADLINE_APPROACHING
+  COMPLIANCE_DEGRADED
+  SYSTEM_ANOMALY
+}
+
+// === CORE MODELS ===
+
+model Organization {
+  id                       String   @id @default(uuid())
+  name                     String
+  plan                     Plan     @default(FREE)
+  settings                 Json     @default("{}")
+  stripeCustomerId         String?  @unique
+  stripeSubscriptionId     String?  @unique
+  stripeSubscriptionStatus String?
+  deletedAt                DateTime? // D07: soft delete
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+  users             User[]
+  aiSystems         AiSystem[]
+  assessments       Assessment[]
+  findings          ComplianceFinding[]
+  documents         GeneratedDocument[]
+  monitoringEvents  MonitoringEvent[]
+  auditLogs         AuditLog[]
+  notifications     Notification[]       // D01: proper table
+  webhooks          OutgoingWebhook[]    // D01: proper table
+  incidents         Incident[]           // D01: proper table
+  checklistItems    ChecklistProgress[]  // D01: proper table
+  apiKeys           ApiKeyRecord[]       // D01: proper table
+  @@index([plan])
+}
+
+model User {
+  id             String    @id @default(uuid())
+  email          String
+  name           String
+  passwordHash   String
+  role           UserRole  @default(VIEWER)
+  refreshToken   String?
+  locale         String    @default("en")
+  lastLoginAt    DateTime?
+  deletedAt      DateTime? // D06: soft delete
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  passwordResets PasswordResetToken[] // B02: proper relation
+  @@unique([email, organizationId])
+  @@index([organizationId])
+  @@index([email])
+}
+
+model AiSystem {
+  id                 String           @id @default(uuid())
+  name               String
+  version            String           @default("1.0")
+  description        String
+  purpose            String?
+  sector             String?
+  dataTypes          String[]         @default([])
+  deploymentContext  String?
+  affectedPopulation String?
+  riskLevel          RiskLevel?
+  complianceStatus   ComplianceStatus @default(NOT_ASSESSED)
+  lastAssessmentAt   DateTime?
+  repoUrl            String?
+  repoProvider       RepoProvider?
+  repoAccessToken    String?          // S02: encrypted at app layer
+  biasTestData       Json?
+  updatedBy          String?          // R05: track who modified
+  deletedAt          DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  organizationId     String
+  organization       Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  assessments        Assessment[]
+  findings           ComplianceFinding[]
+  documents          GeneratedDocument[]
+  monitoringEvents   MonitoringEvent[]
+  @@index([organizationId, deletedAt])
+  @@index([riskLevel])
+  @@index([complianceStatus])              // D03: added
+}
+
+model Assessment {
+  id             String           @id @default(uuid())
+  type           AssessmentType   @default(FULL)
+  status         AssessmentStatus @default(PENDING)
+  triggerType    TriggerType      @default(MANUAL)
+  triggeredBy    String?
+  idempotencyKey String?          @unique // R03: prevent duplicates
+  overallScore   Float?           // D08: Float instead of Int
+  startedAt      DateTime?
+  completedAt    DateTime?
+  deletedAt      DateTime?        // R04: soft delete
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  aiSystemId     String
+  aiSystem       AiSystem         @relation(fields: [aiSystemId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  results        AssessmentResult[]
+  findings       ComplianceFinding[]
+  @@index([aiSystemId, status])
+  @@index([organizationId])
+  @@index([idempotencyKey])
+}
+
+model AssessmentResult {
+  id           String      @id @default(uuid())
+  agentType    AgentType
+  status       AgentStatus @default(PENDING)
+  score        Float?
+  output       Json?
+  promptVersion String?    // A03: track prompt version
+  tokensUsed   Int         @default(0)
+  durationMs   Int         @default(0)
+  errorMessage String?
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime    @default(now())
+  assessmentId String
+  assessment   Assessment  @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  @@index([assessmentId, agentType])
+}
+
+model ComplianceFinding {
+  id              String         @id @default(uuid())
+  articleRef      String
+  severity        Severity
+  category        FindingCategory
+  title           String
+  description     String
+  remediation     String
+  estimatedEffort Effort         @default(DAYS)
+  status          FindingStatus  @default(OPEN)
+  resolution      String?
+  resolvedBy      String?
+  resolvedAt      DateTime?
+  updatedBy       String?        // R05: track who modified
+  deletedAt       DateTime?      // R04: soft delete
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  aiSystemId      String
+  aiSystem        AiSystem       @relation(fields: [aiSystemId], references: [id], onDelete: Cascade)
+  assessmentId    String?
+  assessment      Assessment?    @relation(fields: [assessmentId], references: [id])
+  organizationId  String
+  organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  @@index([organizationId, status])
+  @@index([aiSystemId, severity])
+  @@index([organizationId, category])   // D04: added
+}
+
+model GeneratedDocument {
+  id             String    @id @default(uuid())
+  docType        DocType
+  title          String
+  version        Int       @default(1)
+  s3Path         String
+  contentHash    String
+  generatedBy    String?
+  approvedBy     String?
+  approvedAt     DateTime?
+  expiresAt      DateTime?
+  metadata       Json      @default("{}")
+  createdAt      DateTime  @default(now())
+  aiSystemId     String
+  aiSystem       AiSystem  @relation(fields: [aiSystemId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  @@index([aiSystemId, docType])
+  @@index([expiresAt])
+}
+
+model MonitoringEvent {
+  id             String    @id @default(uuid())
+  eventType      EventType
+  severity       Severity
+  title          String
+  description    String
+  acknowledged   Boolean   @default(false)
+  acknowledgedBy String?
+  acknowledgedAt DateTime?
+  createdAt      DateTime  @default(now())
+  aiSystemId     String?
+  aiSystem       AiSystem? @relation(fields: [aiSystemId], references: [id])
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  @@index([organizationId, acknowledged])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id             String   @id @default(uuid())
+  action         String
+  resource       String
+  resourceId     String?
+  userId         String?
+  userName       String?
+  ipAddress      String?
+  userAgent      String?  // S09: always captured
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+  expiresAt      DateTime? // D05: retention policy
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  @@index([organizationId, createdAt])
+  @@index([expiresAt])                     // D05: cleanup index
+}
+
+// === NEW MODELS (D01: replacing JSON storage) ===
+
+model Notification {
+  id             String   @id @default(uuid())
+  type           String
+  title          String
+  message        String
+  actionUrl      String?
+  read           Boolean  @default(false)
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+  userId         String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  @@index([organizationId, read])
+  @@index([userId, read])
+}
+
+model OutgoingWebhook {
+  id             String    @id @default(uuid())
+  url            String
+  secretHash     String
+  events         String[]
+  active         Boolean   @default(true)
+  failCount      Int       @default(0)
+  lastFiredAt    DateTime?
+  createdAt      DateTime  @default(now())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  @@index([organizationId, active])
+}
+
+model Incident {
+  id                   String    @id @default(uuid())
+  title                String
+  description          String
+  severity             String
+  status               String    @default("DETECTED")
+  detectedAt           DateTime  @default(now())
+  initialReportDue     DateTime
+  detailedReportDue    DateTime
+  initialReportSentAt  DateTime?
+  detailedReportSentAt DateTime?
+  authorityNotified    String?
+  correctiveActions    String[]  @default([])
+  timeline             Json      @default("[]")
+  reportedBy           String
+  aiSystemId           String
+  organizationId       String
+  organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  @@index([organizationId, status])
+  @@index([initialReportDue])
+}
+
+model ChecklistProgress {
+  id             String    @id @default(uuid())
+  itemId         String
+  checked        Boolean   @default(false)
+  checkedBy      String?
+  checkedAt      DateTime?
+  evidence       String?
+  aiSystemId     String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  @@unique([organizationId, aiSystemId, itemId])
+  @@index([aiSystemId])
+}
+
+model ApiKeyRecord {
+  id             String    @id @default(uuid())
+  name           String
+  keyPrefix      String
+  keyHash        String    @unique
+  permissions    String[]
+  rateLimit      Int       @default(1000)
+  requestCount   Int       @default(0)
+  active         Boolean   @default(true)
+  lastUsedAt     DateTime?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now())
+  @@index([organizationId, active])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  @@index([tokenHash])
+  @@index([expiresAt])
+}
+
+model LlmCache {
+  id         String   @id @default(uuid())
+  inputHash  String   @unique
+  response   Json
+  model      String
+  tokensUsed Int
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+  @@index([inputHash])
+  @@index([expiresAt])
+}

@@ -1,0 +1,18 @@
+{
+  "name": "@agentops/mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for AgentOps EU AI Act Compliance Platform. Connect Claude Code, Cursor, Windsurf to AgentOps.",
+  "main": "dist/index.js",
+  "bin": { "agentops-mcp": "dist/index.js" },
+  "scripts": { "build": "tsc", "start": "node dist/index.js" },
+  "keywords": ["mcp", "agentops", "eu-ai-act", "compliance", "ai-governance"],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@types/node": "^20.11.0"
+  }
+}

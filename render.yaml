@@ -1,0 +1,108 @@
+services:
+  - type: web
+    name: agentops-api
+    runtime: node
+    region: frankfurt
+    plan: standard
+    buildCommand: npm ci && npx prisma generate --schema=src/prisma/schema.prisma && npm run build
+    startCommand: npx prisma migrate deploy --schema=src/prisma/schema.prisma && node dist/src/main.js
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase: { name: agentops-db, property: connectionString }
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: ENCRYPTION_KEY
+        generateValue: true
+      - key: FRONTEND_URL
+        value: https://app.agentops.eu
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: ENABLE_DOCS
+        value: "true"
+      - key: APP_VERSION
+        value: "1.2.0"
+
+  - type: cron
+    name: agentops-backup
+    runtime: node
+    region: frankfurt
+    plan: starter
+    schedule: "0 3 * * *"
+    buildCommand: npm ci
+    startCommand: |
+      export BACKUP_FILE="agentops_$(date +%Y%m%d_%H%M%S).sql.gz"
+      pg_dump "$DATABASE_URL" | gzip > "/tmp/$BACKUP_FILE"
+      echo "Backup created: $BACKUP_FILE ($(du -h /tmp/$BACKUP_FILE | cut -f1))"
+      if [ -n "$S3_BUCKET" ] && [ -n "$AWS_ACCESS_KEY_ID" ]; then
+        aws s3 cp "/tmp/$BACKUP_FILE" "s3://$S3_BUCKET/backups/$BACKUP_FILE"
+        echo "Uploaded to S3: s3://$S3_BUCKET/backups/$BACKUP_FILE"
+      else
+        echo "WARNING: S3 not configured. Backup only stored locally (will be lost)."
+        echo "Set S3_BUCKET, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY for persistent backups."
+      fi
+      rm -f "/tmp/$BACKUP_FILE"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase: { name: agentops-db, property: connectionString }
+      - key: S3_BUCKET
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+
+databases:
+  - name: agentops-db
+    plan: starter
+    region: frankfurt
+    postgresMajorVersion: "16"
+
+  # ======== STAGING ========
+  - type: web
+    name: agentops-staging
+    runtime: node
+    region: frankfurt
+    plan: starter
+    buildCommand: npm ci && npx prisma generate --schema=src/prisma/schema.prisma && npm run build
+    startCommand: npx prisma migrate deploy --schema=src/prisma/schema.prisma && node dist/src/main.js
+    healthCheckPath: /health
+    autoDeploy: false
+    branch: develop
+    envVars:
+      - key: NODE_ENV
+        value: staging
+      - key: DATABASE_URL
+        fromDatabase: { name: agentops-staging-db, property: connectionString }
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: ENCRYPTION_KEY
+        generateValue: true
+      - key: FRONTEND_URL
+        value: https://staging.agentops.eu
+      - key: ENABLE_DOCS
+        value: "true"
+      - key: APP_VERSION
+        value: "1.2.0-staging"
+
+  - name: agentops-staging-db
+    plan: starter
+    region: frankfurt
+    postgresMajorVersion: "16"
