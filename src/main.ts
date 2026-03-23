@@ -51,11 +51,7 @@ async function bootstrap() {
   });
 
   // Static files: serve landing page + public assets
-  try {
-    app.useStaticAssets(join(__dirname, '..', 'public'), { prefix: '/' });
-  } catch {
-    try { app.useStaticAssets(join(process.cwd(), 'public'), { prefix: '/' }); } catch {}
-  }
+  app.useStaticAssets(join(process.cwd(), 'public'), { prefix: '/' });
 
   // B08 FIX: API versioning
   app.setGlobalPrefix('api/v1', { exclude: ['health', 'health/ready', 'docs', 'docs-json', '/', 'demo', 'demo/login'] });
